@@ -1,0 +1,2 @@
+# gosqlb
+Terminal sqlite browser
