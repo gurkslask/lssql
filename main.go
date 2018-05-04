@@ -21,6 +21,10 @@ func main() {
 
 }
 
+type foo struct {
+	test string
+}
+
 func connectDB(path *string) (*sql.DB, error) {
 	fmt.Println("Connect to a database")
 	db, err := sql.Open("sqlite3", *path)
