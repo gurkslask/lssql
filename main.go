@@ -1,14 +1,21 @@
 package main
 
 import (
-	"database/sql"
+	//"database/sql"
 	"flag"
 	"fmt"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	// "os"
+	//"strconv"
 )
 
+var debug bool = true
+
 func main() {
+	if debug {
+		fmt.Println("In main")
+	}
 	var path = flag.String("path", "/home/alex/data.db", "Path to .db file")
 	var table = flag.String("table", "", "Name of the table in db")
 	flag.Parse()
@@ -34,39 +41,88 @@ func main() {
 
 }
 
-type foo struct {
-	test string
-}
-
-func connectDB(path *string) (*sql.DB, error) {
-	db, err := sql.Open("sqlite3", *path)
+func connectDB(path *string) (*sqlx.DB, error) {
+	if debug {
+		fmt.Println("In connect")
+	}
+	db, err := sqlx.Open("sqlite3", *path)
 	if err != nil {
 		return nil, err
 	}
 	return db, nil
 }
 
-func printTable(db *sql.DB, tablename *string) (string, error) {
-	var result string
+type tablestruct struct {
+	colname1 string
+	colname2 string
+	colname3 string
+	colname4 string
+	coldata1 string
+	coldata2 string
+	coldata3 string
+	coldata4 string
+}
+
+func printTable(db *sqlx.DB, tablename *string) (string, error) {
+	if debug {
+		fmt.Println("*************In printTable")
+	}
+
+	rows, err := db.Query("PRAGMA table_info(TEST)")
+	defer rows.Close()
+	var i int = 0
+	for rows.Next() {
+
+
+
+	}
+
 	fmt.Println("Table")
-	rows, err := db.Query("select * from PEOPLE")
+
+	rows, err = db.Query("select * from TEST")
+	if err != nil {
+		return "", err
+	}
+	dcols, err := rows.Columns()
+	if err != nil {
+		return "", err
+	}
+
+	rawResult := make([][]byte, len(dcols))
+	result := make([]string, len(dcols))
+
+	dest := make([]interface{}, len(dcols))
+	for i, _ := range rawResult {
+		dest[i] = &rawResult[i]
+	}
+
 	if err != nil {
 		return "", err
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var id, age int
-		var name string
-		err = rows.Scan(&id, &name, &age)
+		err = rows.Scan(dest...)
 		if err != nil {
 			return "", err
 		}
-		result += fmt.Sprint("+", id, "+", name, "+", age, "+\n")
+		for i, raw := range rawResult {
+			if raw == nil {
+				result[i] = "\\N"
+			} else {
+				result[i] = string(raw)
+			}
+		}
+		fmt.Println(result)
 	}
-	return result, nil
+	for i, v range columns
+
+	return "", nil
 }
 
-func printTables(db *sql.DB) (string, error) {
+func printTables(db *sqlx.DB) (string, error) {
+	if debug {
+		fmt.Println("In printTables")
+	}
 	var result string
 	rows, err := db.Query(`SELECT name FROM sqlite_master WHERE type = "table"`)
 	if err != nil {
