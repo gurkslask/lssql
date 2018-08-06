@@ -51,59 +51,32 @@ func connectDB(path *string) (*sqlx.DB, error) {
 	}
 	return db, nil
 }
-
-type tablestruct struct {
-	colname1 string
-	colname2 string
-	colname3 string
-	colname4 string
-	coldata1 string
-	coldata2 string
-	coldata3 string
-	coldata4 string
-}
-
-func printTable(db *sqlx.DB, tablename *string) (string, error) {
-	if debug {
-		fmt.Println("*************In printTable")
-	}
-
-	rows, err := db.Query("PRAGMA table_info(TEST)")
-	defer rows.Close()
-	var i int = 0
-	for rows.Next() {
-
-
-
-	}
-
-	fmt.Println("Table")
-
-	rows, err = db.Query("select * from TEST")
+func getData(db *sqlx.DB, query string) ([]string, error) {
+	rows, err := db.Query(query)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	dcols, err := rows.Columns()
+	columns, err := rows.Columns()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	rawResult := make([][]byte, len(dcols))
-	result := make([]string, len(dcols))
+	rawResult := make([][]byte, len(columns))
+	result := make([]string, len(columns))
 
-	dest := make([]interface{}, len(dcols))
+	dest := make([]interface{}, len(columns))
 	for i, _ := range rawResult {
 		dest[i] = &rawResult[i]
 	}
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		err = rows.Scan(dest...)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		for i, raw := range rawResult {
 			if raw == nil {
@@ -114,7 +87,27 @@ func printTable(db *sqlx.DB, tablename *string) (string, error) {
 		}
 		fmt.Println(result)
 	}
-	for i, v range columns
+	return result, nil
+}
+
+func printTable(db *sqlx.DB, tablename *string) (string, error) {
+	if debug {
+		fmt.Println("*************In printTable")
+	}
+
+	heads, err := getData(db, "PRAGMA table_info(PEOPLE)")
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(heads)
+
+	fmt.Println("Table")
+
+	data, err := getData(db, "select * from PEOPLE")
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(content, heads)
 
 	return "", nil
 }
