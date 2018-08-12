@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	//"strings"
 	// "os"
 	//"strconv"
 )
@@ -19,6 +20,7 @@ func main() {
 	var path = flag.String("path", "/home/alex/data.db", "Path to .db file")
 	var table = flag.String("table", "", "Name of the table in db")
 	flag.Parse()
+	*table = "TEST"
 	db, err := connectDB(path)
 	defer db.Close()
 	if err != nil {
@@ -51,7 +53,9 @@ func connectDB(path *string) (*sqlx.DB, error) {
 	}
 	return db, nil
 }
-func getData(db *sqlx.DB, query string) ([]string, error) {
+
+//Gets strings from unknown columns
+func getData(db *sqlx.DB, query string) ([][]string, error) {
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -63,6 +67,9 @@ func getData(db *sqlx.DB, query string) ([]string, error) {
 
 	rawResult := make([][]byte, len(columns))
 	result := make([]string, len(columns))
+	rresult := make([][]string, len(columns))
+	// var rresult [][]string
+	rownumber := 0
 
 	dest := make([]interface{}, len(columns))
 	for i, _ := range rawResult {
@@ -85,9 +92,12 @@ func getData(db *sqlx.DB, query string) ([]string, error) {
 				result[i] = string(raw)
 			}
 		}
-		fmt.Println(result)
+		//Initialize and copy
+		rresult[rownumber] = make([]string, len(result))
+		copy(rresult[rownumber], result)
+		rownumber += 1
 	}
-	return result, nil
+	return rresult, nil
 }
 
 func printTable(db *sqlx.DB, tablename *string) (string, error) {
@@ -95,21 +105,38 @@ func printTable(db *sqlx.DB, tablename *string) (string, error) {
 		fmt.Println("*************In printTable")
 	}
 
-	heads, err := getData(db, "PRAGMA table_info(PEOPLE)")
+	heads, err := getData(db, "PRAGMA table_info(TEST)")
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(heads)
 
 	fmt.Println("Table")
 
-	data, err := getData(db, "select * from PEOPLE")
+	data, err := getData(db, "select * from TEST")
 	if err != nil {
 		return "", err
 	}
-	fmt.Println(content, heads)
 
-	return "", nil
+	resultstring := ""
+	for i := 0; i < len(data[0]); i++ {
+		resultstring += heads[i][1]
+		resultstring += "\t"
+	}
+	resultstring += "\n"
+	for i := 0; i < len(data[0]); i++ {
+		resultstring += heads[i][2]
+		resultstring += "\t"
+	}
+	resultstring += "\n"
+	for _, row := range data {
+		for _, col := range row {
+			resultstring += col
+			resultstring += "\t"
+		}
+		resultstring += "\n"
+	}
+
+	return resultstring, nil
 }
 
 func printTables(db *sqlx.DB) (string, error) {
