@@ -1,14 +1,10 @@
 package main
 
 import (
-	//"database/sql"
 	"flag"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	//"strings"
-	// "os"
-	//"strconv"
 )
 
 var debug bool = false
@@ -47,6 +43,7 @@ func main() {
 
 }
 
+//Connect to database and return a db
 func connectDB(path *string) (*sqlx.DB, error) {
 	if *debugp {
 		fmt.Println("In connect")
@@ -112,10 +109,10 @@ func getData(db *sqlx.DB, query string) ([][]string, error) {
 	return rresult, nil
 }
 
+// Get data with queries and print it nicely with padding
 func printTable(db *sqlx.DB, tablename *string) (string, error) {
 	if *debugp {
 		fmt.Println("*************In printTable")
-
 		fmt.Println("In Printtable with tablename: %s", *tablename)
 
 	}
@@ -160,10 +157,13 @@ func printTable(db *sqlx.DB, tablename *string) (string, error) {
 	}
 	return resultstring, nil
 }
+
+//Appends data with length padding to dest
 func padString(data string, length int, dest *string) {
 	*dest += fmt.Sprintf("%-[1]*s\t", length, data)
 }
 
+//If no tables are found or requested, print available tables
 func printTables(db *sqlx.DB) (string, error) {
 	if *debugp {
 		fmt.Println("In printTables")
