@@ -11,16 +11,20 @@ import (
 	//"strconv"
 )
 
-var debug bool = true
+var debug bool = false
+var debugp *bool = &debug
 
 func main() {
-	if debug {
+	var path = flag.String("path", "", "Path to .db file")
+	var table = flag.String("table", "", "Name of the table in db")
+	var debugf = flag.Bool("debug", false, "Prints extra debug info")
+	flag.Parse()
+	debugp = debugf
+
+	if *debugp {
 		fmt.Println("In main")
 	}
-	var path = flag.String("path", "/home/alex/data.db", "Path to .db file")
-	var table = flag.String("table", "", "Name of the table in db")
-	flag.Parse()
-	*table = "TEST"
+
 	db, err := connectDB(path)
 	defer db.Close()
 	if err != nil {
@@ -44,7 +48,7 @@ func main() {
 }
 
 func connectDB(path *string) (*sqlx.DB, error) {
-	if debug {
+	if *debugp {
 		fmt.Println("In connect")
 	}
 	db, err := sqlx.Open("sqlite3", *path)
@@ -56,9 +60,15 @@ func connectDB(path *string) (*sqlx.DB, error) {
 
 //Gets strings from unknown columns
 func getData(db *sqlx.DB, query string) ([][]string, error) {
+	if *debugp {
+		fmt.Printf("In getdata with query %s\n", query)
+	}
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
+	}
+	if *debugp {
+		fmt.Println("Query done")
 	}
 	columns, err := rows.Columns()
 	if err != nil {
@@ -67,8 +77,7 @@ func getData(db *sqlx.DB, query string) ([][]string, error) {
 
 	rawResult := make([][]byte, len(columns))
 	result := make([]string, len(columns))
-	rresult := make([][]string, len(columns))
-	// var rresult [][]string
+	var rresult [][]string
 	rownumber := 0
 
 	dest := make([]interface{}, len(columns))
@@ -93,54 +102,70 @@ func getData(db *sqlx.DB, query string) ([][]string, error) {
 			}
 		}
 		//Initialize and copy
-		rresult[rownumber] = make([]string, len(result))
+		rresult = append(rresult, make([]string, len(result)))
 		copy(rresult[rownumber], result)
 		rownumber += 1
+	}
+	if *debugp {
+		fmt.Printf("out getdata with query %s\n", query)
 	}
 	return rresult, nil
 }
 
 func printTable(db *sqlx.DB, tablename *string) (string, error) {
-	if debug {
+	if *debugp {
 		fmt.Println("*************In printTable")
-	}
 
-	heads, err := getData(db, "PRAGMA table_info(TEST)")
+		fmt.Println("In Printtable with tablename: %s", *tablename)
+
+	}
+	heads, err := getData(db, fmt.Sprintf("PRAGMA table_info(%v)", *tablename))
 	if err != nil {
 		return "", err
 	}
 
-	fmt.Println("Table")
+	fmt.Printf("Table %s\n\n", *tablename)
 
-	data, err := getData(db, "select * from TEST")
+	data, err := getData(db, fmt.Sprintf("select * from %v", *tablename))
 	if err != nil {
 		return "", err
 	}
+	columnlengths := maxColumnLength(data, heads)
 
 	resultstring := ""
 	for i := 0; i < len(data[0]); i++ {
-		resultstring += heads[i][1]
-		resultstring += "\t"
+		padString(heads[i][1], columnlengths[i], &resultstring)
+		//resultstring += "\t"
 	}
 	resultstring += "\n"
 	for i := 0; i < len(data[0]); i++ {
-		resultstring += heads[i][2]
-		resultstring += "\t"
+		////resultstring += heads[i][2]
+		padString(heads[i][2], columnlengths[i], &resultstring)
+		//resultstring += "\t"
 	}
+
+	resultstring += "\n"
 	resultstring += "\n"
 	for _, row := range data {
-		for _, col := range row {
-			resultstring += col
-			resultstring += "\t"
+		for i, col := range row {
+			//resultstring += col
+			//resultstring += "\t"
+			padString(col, columnlengths[i], &resultstring)
 		}
 		resultstring += "\n"
 	}
 
+	if *debugp {
+		fmt.Println("Out Printtable with tablename: %s", *tablename)
+	}
 	return resultstring, nil
+}
+func padString(data string, length int, dest *string) {
+	*dest += fmt.Sprintf("%-[1]*s\t", length, data)
 }
 
 func printTables(db *sqlx.DB) (string, error) {
-	if debug {
+	if *debugp {
 		fmt.Println("In printTables")
 	}
 	var result string
@@ -158,4 +183,28 @@ func printTables(db *sqlx.DB) (string, error) {
 		result += fmt.Sprint(name, "\n")
 	}
 	return result, nil
+}
+
+//Gets max column length used for displaying data
+func maxColumnLength(datain ...[][]string) []int {
+	resultLength := 0
+	for _, data := range datain {
+		if len(data[0]) > resultLength {
+			resultLength = len(data[0])
+		}
+	}
+	result := make([]int, resultLength)
+	for _, data := range datain {
+		for i, _ := range data {
+			for j, col := range data[i] {
+				if result[j] < len(col) {
+					//If length of current row is bigger, update data
+					result[j] = len(col) + 5
+				}
+
+			}
+		}
+	}
+	return result
+
 }
