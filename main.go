@@ -2,10 +2,12 @@ package main
 
 import (
 	//"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
+	"log"
 	//"strings"
 	// "os"
 	//"strconv"
@@ -19,14 +21,22 @@ func main() {
 	}
 	var path = flag.String("path", "/home/alex/data.db", "Path to .db file")
 	var table = flag.String("table", "", "Name of the table in db")
+	var col_id = flag.String("col_id", "id", "Name of the id column")
+	var lines = flag.Int("lines", 10, "Number of lines to print")
+	var startid = flag.Int("id", 1, "The id where to start printing")
 	flag.Parse()
-	*table = "TEST"
 	db, err := connectDB(path)
 	defer db.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
 
+	if *path == "" {
+		err = errors.New("No path specified")
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 	if *table == "" {
 		tables, err := printTables(db)
 		if err != nil {
@@ -34,7 +44,7 @@ func main() {
 		}
 		fmt.Println("No table provided, listed tables: \n", tables)
 	} else {
-		result, err := printTable(db, table)
+		result, err := printTable(db, table, col_id, lines, startid)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -68,7 +78,6 @@ func getData(db *sqlx.DB, query string) ([][]string, error) {
 	rawResult := make([][]byte, len(columns))
 	result := make([]string, len(columns))
 	rresult := make([][]string, len(columns))
-	// var rresult [][]string
 	rownumber := 0
 
 	dest := make([]interface{}, len(columns))
@@ -100,7 +109,7 @@ func getData(db *sqlx.DB, query string) ([][]string, error) {
 	return rresult, nil
 }
 
-func printTable(db *sqlx.DB, tablename *string) (string, error) {
+func printTable(db *sqlx.DB, tablename, id_col *string, lines, startid *int) (string, error) {
 	if debug {
 		fmt.Println("*************In printTable")
 	}
@@ -112,7 +121,9 @@ func printTable(db *sqlx.DB, tablename *string) (string, error) {
 
 	fmt.Println("Table")
 
-	data, err := getData(db, "select * from TEST")
+	//data, err := getData(db, "select * from TEST")
+	fmt.Printf("SELECT * FROM  %s WHERE %s = %v LIMIT %v", *tablename, *id_col, *startid, *lines)
+	data, err := getData(db, fmt.Sprintf("SELECT * FROM  %s WHERE %s = %v LIMIT %v", *tablename, *id_col, *startid, *lines))
 	if err != nil {
 		return "", err
 	}
