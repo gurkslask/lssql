@@ -19,9 +19,8 @@ func main() {
 	var path = flag.String("path", "", "Path to .db file")
 	var table = flag.String("table", "", "Name of the table in db")
 	var col_id = flag.String("col_id", "id", "Name of the id column")
-	var lines = flag.Int("lines", 10, "Number of lines to print")
-	var startid = flag.Int("id", 1, "The id where to start printing")
-	flag.Parse()
+	var limit = flag.Int("limit", 10, "Number of lines to print")
+	var offset = flag.Int("offset", 1, "Offset from where to start printing")
 	var debugf = flag.Bool("debug", false, "Prints extra debug info")
 	flag.Parse()
 	debugp = debugf
@@ -49,7 +48,7 @@ func main() {
 		}
 		fmt.Println("No table provided, listed tables: \n", tables)
 	} else {
-		result, err := printTable(db, table, col_id, lines, startid)
+		result, err := printTable(db, table, col_id, limit, offset)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -124,7 +123,7 @@ func getData(db *sqlx.DB, query string) ([][]string, error) {
 	return rresult, nil
 }
 
-func printTable(db *sqlx.DB, tablename, id_col *string, lines, startid *int) (string, error) {
+func printTable(db *sqlx.DB, tablename, id_col *string, limit, offset *int) (string, error) {
 	// Get data with queries and print it nicely with padding
 	if *debugp {
 		fmt.Println("*************In printTable")
@@ -137,12 +136,18 @@ func printTable(db *sqlx.DB, tablename, id_col *string, lines, startid *int) (st
 	}
 
 	fmt.Printf("Table %s\n\n", *tablename)
-
-	//data, err := getData(db, "select * from TEST")
-	fmt.Printf("SELECT * FROM  %s WHERE %s = %v LIMIT %v", *tablename, *id_col, *startid, *lines)
-	data, err := getData(db, fmt.Sprintf("SELECT * FROM  %s WHERE %s = %v LIMIT %v", *tablename, *id_col, *startid, *lines))
+	data, err := getData(db, fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d ", *tablename, *limit, *offset))
 	if err != nil {
 		return "", err
+	}
+	if data == nil {
+		err := errors.New("No data from the query")
+		return "", err
+
+	}
+	if *debugp {
+		fmt.Println("This is the data:")
+		fmt.Println(data)
 	}
 	columnlengths := maxColumnLength(data, heads)
 
