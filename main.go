@@ -7,6 +7,7 @@ import (
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
+	"os"
 )
 
 var debug bool = false
@@ -14,12 +15,30 @@ var debugp *bool = &debug
 
 func main() {
 
-	var path = flag.String("path", "", "Path to db")
+	if len(os.Args) < 2 {
+		fmt.Println("No arguments supplied")
+		os.Exit(1)
+	}
+
+	//var path = flag.String("path", "", "Path to db")
 	var table = flag.String("table", "", "Name of the table in db")
 	var limit = flag.Int("limit", 10, "Number of lines to print")
 	var offset = flag.Int("offset", 1, "Offset from where to start printing")
 	var debugf = flag.Bool("debug", false, "Prints extra debug info")
-	flag.Parse()
+	flag.CommandLine.Parse(os.Args[2:])
+	fmt.Println(os.Args)
+	path := &os.Args[1]
+	p := string("-table2")
+	path = &p
+	f, err := os.Stat(*path)
+	fmt.Println(f)
+	fmt.Println(err)
+	fmt.Println(*path)
+	if os.IsNotExist(err) {
+		fmt.Println("Supplied path does not exist")
+		os.Exit(1)
+	}
+	fmt.Println(err)
 	debugp = debugf
 
 	if *debugp {
