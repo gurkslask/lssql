@@ -59,7 +59,7 @@ func main() {
 		}
 	}
 	if *table == "" {
-		tables, err := printTables(db)
+		tables, err := printAvailableTables(db)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -88,15 +88,8 @@ func connectDB(path *string) (*sql.DB, error) {
 
 //Gets strings from unknown columns
 func getData(rows *sql.Rows) ([][]string, error) {
-	/*if *debugp {
-		fmt.Printf("In getdata with query %s\n", query)
-	}
-	rows, err := db.Query(query)
-	if err != nil {
-		return nil, err
-	}*/
 	if *debugp {
-		fmt.Println("Query done")
+		fmt.Println("in getData")
 	}
 	columns, err := rows.Columns()
 	if err != nil {
@@ -229,10 +222,10 @@ func padString(data string, length int, dest *string) {
 	*dest += fmt.Sprintf("%-[1]*s\t", length, data)
 }
 
-//If no tables are found or requested, print available tables
-func printTables(db *sql.DB) (string, error) {
+//Returns string with all available tables from db
+func printAvailableTables(db *sql.DB) (string, error) {
 	if *debugp {
-		fmt.Println("In printTables")
+		fmt.Println("In printAvailableTables")
 	}
 	var result string
 	rows, err := db.Query(`SELECT name FROM sqlite_master WHERE type = "table"`)
