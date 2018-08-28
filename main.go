@@ -37,7 +37,7 @@ func main() {
 	}
 
 	path := &os.Args[1]
-	f, err := os.Stat(*path)
+	_, err := os.Stat(*path)
 	if os.IsNotExist(err) {
 		fmt.Println("Supplied path does not exist")
 		os.Exit(1)
