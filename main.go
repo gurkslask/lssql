@@ -16,31 +16,34 @@ var debugp *bool = &debug
 func main() {
 
 	if len(os.Args) < 2 {
-		fmt.Println("No arguments supplied")
+		printHelp()
+		os.Exit(1)
+	}
+	if string(os.Args[1][0]) == "-" {
+		printHelp()
 		os.Exit(1)
 	}
 
-	//var path = flag.String("path", "", "Path to db")
 	var table = flag.String("table", "", "Name of the table in db")
 	var limit = flag.Int("limit", 10, "Number of lines to print")
 	var offset = flag.Int("offset", 1, "Offset from where to start printing")
 	var debugf = flag.Bool("debug", false, "Prints extra debug info")
+	var help = flag.Bool("help", false, "Prints help dialog")
 	flag.CommandLine.Parse(os.Args[2:])
-	fmt.Println(os.Args)
+
+	if *help {
+		printHelp()
+		os.Exit(0)
+	}
+
 	path := &os.Args[1]
-	p := string("-tableFDSFDSdfdsfsd2")
-	path = &p
 	f, err := os.Stat(*path)
-	fmt.Println(f)
-	fmt.Println(err)
-	fmt.Println(*path)
 	if os.IsNotExist(err) {
 		fmt.Println("Supplied path does not exist")
 		os.Exit(1)
 	}
-	fmt.Println(err)
-	debugp = debugf
 
+	debugp = debugf
 	if *debugp {
 		fmt.Println("In main")
 		fmt.Println(table)
@@ -266,4 +269,32 @@ func maxColumnLength(datain ...[][]string) []int {
 	}
 	return result
 
+}
+
+//Prints help monologe
+func printHelp() {
+	fmt.Println(`
+	NAME
+		lssql - List SQL contents
+	SYNOPSIS
+		lssql [FILE] [OPTION]...
+	DESCRIPTION
+		List contents of SQL databases.
+
+		-table 
+		List contents of this table, if omitted print available tables
+
+		-limit 
+		Number of lines to print
+
+		-offset
+		Offset from where to start printing
+
+		-debug 
+		Prints extra debug info
+
+		-help
+		Prints help dialog (this)
+
+`)
 }
