@@ -28,7 +28,7 @@ func main() {
 	flag.CommandLine.Parse(os.Args[2:])
 	fmt.Println(os.Args)
 	path := &os.Args[1]
-	p := string("-table2")
+	p := string("-tableFDSFDSdfdsfsd2")
 	path = &p
 	f, err := os.Stat(*path)
 	fmt.Println(f)
