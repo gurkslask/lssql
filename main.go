@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
@@ -29,6 +30,7 @@ func main() {
 	var offset = flag.Int("offset", 1, "Offset from where to start printing")
 	var debugf = flag.Bool("debug", false, "Prints extra debug info")
 	var help = flag.Bool("help", false, "Prints help dialog")
+	var dbtype = flag.String("dbtype", "sqlite", `What kind of database?\nSupported databases: sqlite and postgres`)
 	flag.CommandLine.Parse(os.Args[2:])
 
 	if *help {
@@ -49,17 +51,21 @@ func main() {
 		fmt.Println(table)
 	}
 
-	db, err := connectDB(path)
-	defer db.Close()
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	if *path == "" {
 		err = errors.New("No path specified")
 		if err != nil {
 			log.Fatal(err)
 		}
+	}
+	dbSpecifics, err := getDbSpecifics(*dbtype)
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+	db, err := connectDB(path, dbSpecifics)
+	defer db.Close()
+	if err != nil {
+		fmt.Println(err)
 	}
 	if *table == "" {
 		tables, err := printAvailableTables(db)
@@ -78,15 +84,21 @@ func main() {
 }
 
 //Connect to database and return a db
-func connectDB(path *string) (*sql.DB, error) {
+func connectDB(path *string, specifiedDb dbSpecifics) (*sql.DB, error) {
 	if *debugp {
 		fmt.Println("In connect")
 	}
-	db, err := sql.Open("sqlite3", *path)
+	db, err := sql.Open(specifiedDb.name, *path)
 	if err != nil {
 		return nil, err
 	}
 	return db, nil
+}
+
+type dbSpecifics struct {
+	name                 string
+	columnInfoQuery      string
+	availableTablesQuery string
 }
 
 //Gets strings from unknown columns
@@ -297,4 +309,24 @@ func printHelp() {
 		Prints help dialog (this)
 
 `)
+}
+func getDbSpecifics(dbType string) (dbSpecifics, error) {
+
+	var specifiedDb dbSpecifics
+	switch dbType {
+	case "sqlite":
+		specifiedDb.name = "sqlite3"
+		specifiedDb.columnInfoQuery = fmt.Sprintf("PRAGMA TABLE_INFO(%s)", *table)
+		specifiedDb.availableTablesQuery = `SELECT name FROM sqlite_master WHERE type = "table"`
+	case "postgres":
+		specifiedDb.name = "postgres"
+		specifiedDb.columnInfoQuery = fmt.Sprintf("SELECT * FROM %s WHERE false", *table)
+		specifiedDb.availableTablesQuery = `select * from pg_catalog.pg_tables`
+
+	default:
+		e := errors.New(fmt.Sprintf("No type with the name %s supported", dbType))
+		return nil, e
+	}
+
+	return specifiedDb, nil
 }
