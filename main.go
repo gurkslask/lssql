@@ -57,7 +57,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	dbSpecifics, err := getDbSpecifics(*dbtype)
+	dbSpecifics, err := getDbSpecifics(*dbtype, table)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
@@ -310,22 +310,22 @@ func printHelp() {
 
 `)
 }
-func getDbSpecifics(dbType string) (dbSpecifics, error) {
+func getDbSpecifics(dbType string, table *string) (dbSpecifics, error) {
 
 	var specifiedDb dbSpecifics
 	switch dbType {
 	case "sqlite":
 		specifiedDb.name = "sqlite3"
-		specifiedDb.columnInfoQuery = fmt.Sprintf("PRAGMA TABLE_INFO(%s)", *table)
+		specifiedDb.columnInfoQuery = fmt.Sprintf("PRAGMA TABLE_INFO(%s)", table)
 		specifiedDb.availableTablesQuery = `SELECT name FROM sqlite_master WHERE type = "table"`
 	case "postgres":
 		specifiedDb.name = "postgres"
-		specifiedDb.columnInfoQuery = fmt.Sprintf("SELECT * FROM %s WHERE false", *table)
+		specifiedDb.columnInfoQuery = fmt.Sprintf("SELECT * FROM %s WHERE false", table)
 		specifiedDb.availableTablesQuery = `select * from pg_catalog.pg_tables`
 
 	default:
 		e := errors.New(fmt.Sprintf("No type with the name %s supported", dbType))
-		return nil, e
+		return dbSpecifics{}, e
 	}
 
 	return specifiedDb, nil
