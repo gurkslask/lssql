@@ -108,14 +108,15 @@ func printHelp() {
 
 `)
 }
-func getDbSpecifics(dbType string) (*lssqldb, error) {
+func getDbSpecifics(dbType string) (lssqldb, error) {
 
+	var databasep lssqldb
 	switch dbType {
 	case "sqlite":
-		var databasep *sqlite
+		var databasep sqlite
 		databasep.dbtype = "sqlite3"
 	case "postgres":
-		var databasep *postgres
+		var databasep postgres
 		databasep.dbtype = "postgres"
 	default:
 		e := errors.New(fmt.Sprintf("No type with the name %s supported", dbType))
@@ -123,4 +124,18 @@ func getDbSpecifics(dbType string) (*lssqldb, error) {
 	}
 
 	return databasep, nil
+}
+
+//Connect to database and return a db
+func connectDB(path *string, specifiedDb *lssqldb) error {
+	if *debugp {
+		fmt.Println("In connect")
+	}
+	p := &specifiedDb.getdb()
+	p, err := sql.Open(specifiedDb.getdbtype(), *path)
+	_ = p
+	if err != nil {
+		return err
+	}
+	return nil
 }

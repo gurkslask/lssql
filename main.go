@@ -57,43 +57,30 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	dbSpecifics, err := getDbSpecifics(*dbtype, table)
+	dbSpecifics, err := getDbSpecifics(*dbtype)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err := connectDB(path, *dbSpecifics)
-	defer dbSpecifics.db.Close()
+	err = connectDB(path, &dbSpecifics)
+	dbspecdb := dbSpecifics.getdb()
+	defer dbspecdb.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
 	if *table == "" {
-		tables, err := d.availableTables()
+		tables, err := dbSpecifics.availableTables()
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("No table provided, listed tables: \n", tables)
 	} else {
-		result, err := printTable(db, table, limit, offset)
+		result, err := printTable(dbSpecifics, table, limit, offset)
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println(result)
 	}
 
-}
-
-//Connect to database and return a db
-func connectDB(path *string, specifiedDb lssqldb) error {
-	if *debugp {
-		fmt.Println("In connect")
-	}
-	p := specifiedDb.getdb()
-	p, err := sql.Open(specifiedDb.getdbtype(), *path)
-	_ = p
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 type lssqldb interface {
