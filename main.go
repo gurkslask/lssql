@@ -57,7 +57,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
-	dbSpecifics, err := getDbSpecifics(*dbtype)
+	dbSpecifics, err := getDbSpecifics(*dbtype, table)
 	if err != nil {
 		log.Fatal(err)
 	}
