@@ -60,15 +60,14 @@ func main() {
 	dbSpecifics, err := getDbSpecifics(*dbtype)
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
-	db, err := connectDB(path, dbSpecifics)
-	defer db.Close()
+	err := connectDB(path, *dbSpecifics)
+	defer dbSpecifics.db.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
 	if *table == "" {
-		tables, err := printAvailableTables(db)
+		tables, err := d.availableTables()
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -84,107 +83,40 @@ func main() {
 }
 
 //Connect to database and return a db
-func connectDB(path *string, specifiedDb dbSpecifics) (*sql.DB, error) {
+func connectDB(path *string, specifiedDb lssqldb) error {
 	if *debugp {
 		fmt.Println("In connect")
 	}
-	db, err := sql.Open(specifiedDb.name, *path)
+	p := specifiedDb.getdb()
+	p, err := sql.Open(specifiedDb.getdbtype(), *path)
+	_ = p
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return db, nil
+	return nil
 }
 
-type dbSpecifics struct {
-	name                 string
-	columnInfoQuery      string
-	availableTablesQuery string
+type lssqldb interface {
+	columnInfo(*string) ([][]string, error)
+	availableTables() (string, error)
+	getdb() *sql.DB
+	getdbtype() string
 }
 
-//Gets strings from unknown columns
-func getData(rows *sql.Rows) ([][]string, error) {
-	if *debugp {
-		fmt.Println("in getData")
-	}
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
-	rawResult := make([][]byte, len(columns))
-	result := make([]string, len(columns))
-	var rresult [][]string
-	rownumber := 0
-
-	/* dest is where Scan puts data, make dest contain pointers to rawResult that is []byte */
-	dest := make([]interface{}, len(columns))
-	for i, _ := range rawResult {
-		dest[i] = &rawResult[i]
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		err = rows.Scan(dest...)
-		if err != nil {
-			return nil, err
-		}
-		/* If rawresult isnt nil, make them string */
-		for i, raw := range rawResult {
-			if raw == nil {
-				result[i] = "\\N"
-			} else {
-				result[i] = string(raw)
-			}
-		}
-		//Initialize and copy to a [][]string that contains all the rows
-		rresult = append(rresult, make([]string, len(result)))
-		copy(rresult[rownumber], result)
-		rownumber += 1
-	}
-	/*if *debugp {
-		fmt.Printf("out getdata with query %s\n", query)
-	}*/
-	return rresult, nil
-}
-
-func printTable(db *sql.DB, tablename *string, limit, offset *int) (string, error) {
+func printTable(d lssqldb, tablename *string, limit, offset *int) (string, error) {
 	// Get data with queries and print it nicely with padding
 	if *debugp {
 		fmt.Println("*************In printTable")
 		fmt.Println("In Printtable with tablename: %s", *tablename)
 
 	}
-	tx, err := db.Begin()
-	if err != nil {
-		return "", err
-	}
 	fmt.Printf("Table %s\n\n", *tablename)
-	//fmt.Print("PRAGMA TABLE_INFO(%s)", *tablename)
-	stmt, err := tx.Prepare(fmt.Sprintf("PRAGMA TABLE_INFO(%s)", *tablename))
-	if err != nil {
-		fmt.Println("stmt")
-		return "", err
-	}
-	rows, err := stmt.Query()
-	if err != nil {
-		fmt.Println("rows")
-		return "", err
-	}
-	heads, err := getData(rows)
+	db := d.getdb()
+	stmt, err := db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ? ", *tablename))
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("Table %s\n\n", *tablename)
-	//data, err := getData(db, fmt.Sprintf("SELECT * FROM %s LIMIT %d OFFSET %d ", *tablename, *limit, *offset))
-	//stmt, err = db.Prepare("SELECT * FROM ? LIMIT (?) OFFSET (?) ")
-	stmt, err = db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ? ", *tablename))
-	if err != nil {
-		return "", err
-	}
-	rows, err = stmt.Query(*limit, *offset)
+	rows, err := stmt.Query(*limit, *offset)
 	if err != nil {
 		return "", err
 	}
@@ -195,7 +127,10 @@ func printTable(db *sql.DB, tablename *string, limit, offset *int) (string, erro
 	if data == nil {
 		err := errors.New("No data from the query")
 		return "", err
-
+	}
+	heads, err := d.columnInfo(tablename)
+	if err != nil {
+		log.Fatal(err)
 	}
 	if *debugp {
 		fmt.Println("This is the data:")
@@ -219,8 +154,6 @@ func printTable(db *sql.DB, tablename *string, limit, offset *int) (string, erro
 	resultstring += "\n"
 	for _, row := range data {
 		for i, col := range row {
-			//resultstring += col
-			//resultstring += "\t"
 			padString(col, columnlengths[i], &resultstring)
 		}
 		resultstring += "\n"
@@ -230,103 +163,4 @@ func printTable(db *sql.DB, tablename *string, limit, offset *int) (string, erro
 		fmt.Println("Out Printtable with tablename: %s", *tablename)
 	}
 	return resultstring, nil
-}
-
-//Appends data with length padding to dest
-func padString(data string, length int, dest *string) {
-	*dest += fmt.Sprintf("%-[1]*s\t", length, data)
-}
-
-//Returns string with all available tables from db
-func printAvailableTables(db *sql.DB) (string, error) {
-	if *debugp {
-		fmt.Println("In printAvailableTables")
-	}
-	var result string
-	rows, err := db.Query(`SELECT name FROM sqlite_master WHERE type = "table"`)
-	if err != nil {
-		return "", err
-	}
-	for rows.Next() {
-
-		var name string
-		err = rows.Scan(&name)
-		if err != nil {
-			return "", err
-		}
-		result += fmt.Sprint(name, "\n")
-	}
-	return result, nil
-}
-
-//Gets max column length used for displaying data
-func maxColumnLength(datain ...[][]string) []int {
-	resultLength := 0
-	for _, data := range datain {
-		if len(data[0]) > resultLength {
-			resultLength = len(data[0])
-		}
-	}
-	result := make([]int, resultLength)
-	for _, data := range datain {
-		for i, _ := range data {
-			for j, col := range data[i] {
-				if result[j] < len(col) {
-					//If length of current row is bigger, update data
-					result[j] = len(col) + 5
-				}
-
-			}
-		}
-	}
-	return result
-
-}
-
-//Prints help monologe
-func printHelp() {
-	fmt.Println(`
-	NAME
-		lssql - List SQL contents
-	SYNOPSIS
-		lssql [FILE] [OPTION]...
-	DESCRIPTION
-		List contents of SQL databases.
-
-		-table 
-		List contents of this table, if omitted print available tables
-
-		-limit 
-		Number of lines to print
-
-		-offset
-		Offset from where to start printing
-
-		-debug 
-		Prints extra debug info
-
-		-help
-		Prints help dialog (this)
-
-`)
-}
-func getDbSpecifics(dbType string) (dbSpecifics, error) {
-
-	var specifiedDb dbSpecifics
-	switch dbType {
-	case "sqlite":
-		specifiedDb.name = "sqlite3"
-		specifiedDb.columnInfoQuery = fmt.Sprintf("PRAGMA TABLE_INFO(%s)", *table)
-		specifiedDb.availableTablesQuery = `SELECT name FROM sqlite_master WHERE type = "table"`
-	case "postgres":
-		specifiedDb.name = "postgres"
-		specifiedDb.columnInfoQuery = fmt.Sprintf("SELECT * FROM %s WHERE false", *table)
-		specifiedDb.availableTablesQuery = `select * from pg_catalog.pg_tables`
-
-	default:
-		e := errors.New(fmt.Sprintf("No type with the name %s supported", dbType))
-		return nil, e
-	}
-
-	return specifiedDb, nil
 }
