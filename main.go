@@ -39,10 +39,13 @@ func main() {
 	}
 
 	path := &os.Args[1]
-	_, err := os.Stat(*path)
-	if os.IsNotExist(err) {
-		fmt.Println("Supplied path does not exist")
-		os.Exit(1)
+	var err error
+	if *dbtype == "sqlite" {
+		_, err = os.Stat(*path)
+		if os.IsNotExist(err) {
+			fmt.Println("Supplied path does not exist")
+			os.Exit(1)
+		}
 	}
 
 	debugp = debugf
@@ -61,20 +64,19 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = connectDB(path, &dbSpecifics)
-	dbspecdb := dbSpecifics.getdb()
-	defer dbspecdb.Close()
+	err = connectDB(path, dbSpecifics)
+	defer dbSpecifics.db.Close()
 	if err != nil {
 		fmt.Println(err)
 	}
 	if *table == "" {
-		tables, err := dbSpecifics.availableTables()
+		tables, err := dbSpecifics.lister.availableTables(dbSpecifics.db)
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println("No table provided, listed tables: \n", tables)
 	} else {
-		result, err := printTable(dbSpecifics, table, limit, offset)
+		result, err := printTable(*dbSpecifics, table, limit, offset)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -83,14 +85,18 @@ func main() {
 
 }
 
-type lssqldb interface {
-	columnInfo(*string) ([][]string, error)
-	availableTables() (string, error)
-	getdb() *sql.DB
-	getdbtype() string
+type dblister interface {
+	columnInfo(*string, *sql.DB) ([][]string, error)
+	availableTables(*sql.DB) (string, error)
+	statement() string
+}
+type dsa struct {
+	dbtype string
+	db     *sql.DB
+	lister dblister
 }
 
-func printTable(d lssqldb, tablename *string, limit, offset *int) (string, error) {
+func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
 	// Get data with queries and print it nicely with padding
 	if *debugp {
 		fmt.Println("*************In printTable")
@@ -98,9 +104,11 @@ func printTable(d lssqldb, tablename *string, limit, offset *int) (string, error
 
 	}
 	fmt.Printf("Table %s\n\n", *tablename)
-	db := d.getdb()
-	stmt, err := db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ? ", *tablename))
+	//stmt, err := d.db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT $1 OFFSET $2 ", *tablename))
+	//stmt, err := d.db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ? ", *tablename))
+	stmt, err := d.db.Prepare(fmt.Sprintf(d.lister.statement(), *tablename))
 	if err != nil {
+		fmt.Println("stmt err")
 		return "", err
 	}
 	rows, err := stmt.Query(*limit, *offset)
@@ -115,13 +123,15 @@ func printTable(d lssqldb, tablename *string, limit, offset *int) (string, error
 		err := errors.New("No data from the query")
 		return "", err
 	}
-	heads, err := d.columnInfo(tablename)
+	heads, err := d.lister.columnInfo(tablename, d.db)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("heads ", err)
 	}
 	if *debugp {
 		fmt.Println("This is the data:")
 		fmt.Println(data)
+		fmt.Println("This is the heads:")
+		fmt.Println(heads)
 	}
 	columnlengths := maxColumnLength(data, heads)
 

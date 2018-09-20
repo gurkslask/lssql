@@ -49,6 +49,9 @@ func getData(rows *sql.Rows) ([][]string, error) {
 		copy(rresult[rownumber], result)
 		rownumber += 1
 	}
+	if *debugp {
+		fmt.Println("End of getData")
+	}
 	return rresult, nil
 }
 
@@ -108,32 +111,34 @@ func printHelp() {
 
 `)
 }
-func getDbSpecifics(dbType string) (lssqldb, error) {
+func getDbSpecifics(dbType string) (*dsa, error) {
 
-	var databasep lssqldb
+	//var databasep dsa
+	databasep := new(dsa)
 	switch dbType {
 	case "sqlite":
-		var databasep sqlite
+		psqlite := new(sqlite)
+		databasep.lister = psqlite
 		databasep.dbtype = "sqlite3"
 	case "postgres":
-		var databasep postgres
+		ppostgres := new(postgres)
+		databasep.lister = ppostgres
 		databasep.dbtype = "postgres"
 	default:
 		e := errors.New(fmt.Sprintf("No type with the name %s supported", dbType))
-		return nil, e
+		return databasep, e
 	}
 
 	return databasep, nil
 }
 
 //Connect to database and return a db
-func connectDB(path *string, specifiedDb *lssqldb) error {
+func connectDB(path *string, specifiedDb *dsa) error {
+	var err error
 	if *debugp {
 		fmt.Println("In connect")
 	}
-	p := &specifiedDb.getdb()
-	p, err := sql.Open(specifiedDb.getdbtype(), *path)
-	_ = p
+	specifiedDb.db, err = sql.Open(specifiedDb.dbtype, *path)
 	if err != nil {
 		return err
 	}
