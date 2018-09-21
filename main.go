@@ -40,13 +40,13 @@ func main() {
 
 	path := &os.Args[1]
 	var err error
-	if *dbtype == "sqlite" {
+	/*if *dbtype == "sqlite" {
 		_, err = os.Stat(*path)
 		if os.IsNotExist(err) {
 			fmt.Println("Supplied path does not exist")
 			os.Exit(1)
 		}
-	}
+	}*/
 
 	debugp = debugf
 	if *debugp {

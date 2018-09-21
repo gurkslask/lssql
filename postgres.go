@@ -63,7 +63,7 @@ func (d postgres) columnInfo(tablename *string, db *sql.DB) ([][]string, error) 
 	var heads [][]string
 	for index, name := range columns {
 		fmt.Println(name, columntypes[index].ScanType())
-		heads = append(heads, []string{name, string(columntypes[index].ScanType())})
+		heads = append(heads, []string{name, columntypes[index].ScanType().Name()})
 		//heads = [][]string{{fmt.Sprint(name, columntypes[index].ScanType())}}
 	}
 	if err != nil {

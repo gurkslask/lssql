@@ -106,6 +106,9 @@ func printHelp() {
 		-debug 
 		Prints extra debug info
 
+		-dbtype
+		Choose between sqlite and postgres (Default: sqlite)
+
 		-help
 		Prints help dialog (this)
 
