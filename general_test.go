@@ -41,5 +41,8 @@ func TestMaxColumnLength(t *testing.T) {
 			t.Errorf("Got :%d, want:%d,", result, want)
 		}
 	}
+}
 
+func TestGetDBSpecifics(t *testing.T) {
+	t.Error("hej")
 }

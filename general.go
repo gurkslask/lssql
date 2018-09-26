@@ -86,8 +86,7 @@ func maxColumnLength(datain ...[][]string) []int {
 
 //Prints help monologe
 func printHelp() {
-	fmt.Println(`
-	NAME
+	fmt.Println(` NAME
 		lssql - List SQL contents
 	SYNOPSIS
 		lssql [FILE] [OPTION]...
@@ -110,9 +109,7 @@ func printHelp() {
 		Choose between sqlite and postgres (Default: sqlite)
 
 		-help
-		Prints help dialog (this)
-
-`)
+		Prints help dialog (this) `)
 }
 func getDbSpecifics(dbType string) (*dsa, error) {
 

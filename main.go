@@ -100,7 +100,7 @@ func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
 	// Get data with queries and print it nicely with padding
 	if *debugp {
 		fmt.Println("*************In printTable")
-		fmt.Println("In Printtable with tablename: %s", *tablename)
+		fmt.Printf("In Printtable with tablename: %s\n", *tablename)
 
 	}
 	fmt.Printf("Table %s\n\n", *tablename)
@@ -157,7 +157,7 @@ func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
 	}
 
 	if *debugp {
-		fmt.Println("Out Printtable with tablename: %s", *tablename)
+		fmt.Printf("Out Printtable with tablename: %s\n", *tablename)
 	}
 	return resultstring, nil
 }
