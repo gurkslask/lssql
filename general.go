@@ -112,8 +112,6 @@ func printHelp() {
 		Prints help dialog (this) `)
 }
 func getDbSpecifics(dbType string) (*dsa, error) {
-
-	//var databasep dsa
 	databasep := new(dsa)
 	switch dbType {
 	case "sqlite":

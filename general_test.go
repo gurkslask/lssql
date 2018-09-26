@@ -42,7 +42,3 @@ func TestMaxColumnLength(t *testing.T) {
 		}
 	}
 }
-
-func TestGetDBSpecifics(t *testing.T) {
-	t.Error("hej")
-}

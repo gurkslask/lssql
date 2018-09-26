@@ -127,6 +127,7 @@ func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
 	if err != nil {
 		log.Fatal("heads ", err)
 	}
+
 	if *debugp {
 		fmt.Println("This is the data:")
 		fmt.Println(data)
@@ -137,14 +138,12 @@ func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
 
 	resultstring := ""
 	for i := 0; i < len(data[0]); i++ {
-		padString(heads[i][1], columnlengths[i], &resultstring)
+		padString(heads[i][0], columnlengths[i], &resultstring)
 		//resultstring += "\t"
 	}
 	resultstring += "\n"
 	for i := 0; i < len(data[0]); i++ {
-		////resultstring += heads[i][2]
-		padString(heads[i][2], columnlengths[i], &resultstring)
-		//resultstring += "\t"
+		padString(heads[i][1], columnlengths[i], &resultstring)
 	}
 
 	resultstring += "\n"
