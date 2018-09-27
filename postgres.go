@@ -33,7 +33,7 @@ func (d postgres) availableTables(db *sql.DB) (string, error) {
 	}
 	return result, nil
 }
-func (d postgres) columnInfo(tablename *string, db *sql.DB) ([][]string, error) {
+func (d postgres) columnInfo(tablename *string, db *sql.DB) ([]dbhead, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -60,10 +60,15 @@ func (d postgres) columnInfo(tablename *string, db *sql.DB) ([][]string, error) 
 		fmt.Println("in columninfo")
 	}
 
-	var heads [][]string
+	//var heads [][]string
+	var heads []dbhead
 	for index, name := range columns {
 		fmt.Println(name, columntypes[index].ScanType())
-		heads = append(heads, []string{name, columntypes[index].ScanType().Name()})
+		//heads = append(heads, []string{name, columntypes[index].ScanType().Name()})
+		heads = append(heads, dbhead{
+			colname: name,
+			coltype: columntypes[index].ScanType().Name(),
+		})
 		//heads = [][]string{{fmt.Sprint(name, columntypes[index].ScanType())}}
 	}
 	if err != nil {

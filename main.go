@@ -86,7 +86,7 @@ func main() {
 }
 
 type dblister interface {
-	columnInfo(*string, *sql.DB) ([][]string, error)
+	columnInfo(*string, *sql.DB) ([]dbhead, error)
 	availableTables(*sql.DB) (string, error)
 	statement() string
 }
@@ -94,6 +94,11 @@ type dsa struct {
 	dbtype string
 	db     *sql.DB
 	lister dblister
+}
+
+type dbhead struct {
+	colname string
+	coltype string
 }
 
 func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
@@ -134,16 +139,17 @@ func printTable(d dsa, tablename *string, limit, offset *int) (string, error) {
 		fmt.Println("This is the heads:")
 		fmt.Println(heads)
 	}
-	columnlengths := maxColumnLength(data, heads)
+	t := [][]string{{heads[0].colname, heads[0].coltype}}
+	columnlengths := maxColumnLength(data, t)
 
 	resultstring := ""
 	for i := 0; i < len(data[0]); i++ {
-		padString(heads[i][0], columnlengths[i], &resultstring)
+		padString(heads[i].colname, columnlengths[i], &resultstring)
 		//resultstring += "\t"
 	}
 	resultstring += "\n"
 	for i := 0; i < len(data[0]); i++ {
-		padString(heads[i][1], columnlengths[i], &resultstring)
+		padString(heads[i].coltype, columnlengths[i], &resultstring)
 	}
 
 	resultstring += "\n"

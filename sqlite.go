@@ -30,7 +30,7 @@ func (d sqlite) availableTables(db *sql.DB) (string, error) {
 	return result, nil
 }
 
-func (d sqlite) columnInfo(tablename *string, db *sql.DB) ([][]string, error) {
+func (d sqlite) columnInfo(tablename *string, db *sql.DB) ([]dbhead, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -49,7 +49,15 @@ func (d sqlite) columnInfo(tablename *string, db *sql.DB) ([][]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return heads, nil
+	var t []dbhead
+	for i, _ := range heads {
+		t = append(t, dbhead{
+			colname: heads[i][0],
+			coltype: heads[i][1],
+		})
+	}
+	_ = t
+	return t, nil
 }
 
 func (d sqlite) statement() string { return "SELECT * FROM %s LIMIT ? OFFSET ? " }
