@@ -1,18 +1,15 @@
-package main
+package lssql
 
 import (
 	"database/sql"
 	"fmt"
 )
 
-type sqlite struct {
+type Sqlite struct {
 }
 
 //Returns string with all available tables from db
-func (d sqlite) availableTables(db *sql.DB) (string, error) {
-	if *debugp {
-		fmt.Println("In printAvailableTables")
-	}
+func (d Sqlite) AvailableTables(db *sql.DB) (string, error) {
 	var result string
 	rows, err := db.Query(`SELECT name FROM sqlite_master WHERE type = "table"`)
 	if err != nil {
@@ -30,7 +27,7 @@ func (d sqlite) availableTables(db *sql.DB) (string, error) {
 	return result, nil
 }
 
-func (d sqlite) columnInfo(tablename *string, db *sql.DB) ([]dbhead, error) {
+func (d Sqlite) ColumnInfo(tablename *string, db *sql.DB) ([]DBhead, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -45,19 +42,19 @@ func (d sqlite) columnInfo(tablename *string, db *sql.DB) ([]dbhead, error) {
 		fmt.Println("rows")
 		return nil, err
 	}
-	heads, err := getData(rows)
+	heads, err := GetData(rows)
 	if err != nil {
 		return nil, err
 	}
-	var t []dbhead
+	var t []DBhead
 	for i, _ := range heads {
-		t = append(t, dbhead{
-			colname: heads[i][0],
-			coltype: heads[i][1],
+		t = append(t, DBhead{
+			Colname: heads[i][0],
+			Coltype: heads[i][1],
 		})
 	}
 	_ = t
 	return t, nil
 }
 
-func (d sqlite) statement() string { return "SELECT * FROM %s LIMIT ? OFFSET ? " }
+func (d Sqlite) Statement() string { return "SELECT * FROM %s LIMIT ? OFFSET ? " }

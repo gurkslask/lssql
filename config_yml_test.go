@@ -1,4 +1,4 @@
-package main
+package lssql
 
 import (
 	"testing"
@@ -10,20 +10,20 @@ func TestReadConfig(t *testing.T) {
 	c := new(Config_yml)
 	var want ConfigT
 	var got *ConfigT
-	want.path = "/tmp/foo"
-	want.table = "TEST"
-	want.limit = 0
-	want.offset = 0
-	want.dbtype = "sqlite"
+	want.Path = "/tmp/foo"
+	want.Table = "TEST"
+	want.Limit = 0
+	want.Offset = 0
+	want.Dbtype = "sqlite"
 	got, err := c.ReadConfig(in)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want.table != got.table {
-		t.Errorf("Wrong table, want: %s, got: %s", want.table, got.table)
+	if want.Table != got.Table {
+		t.Errorf("Wrong table, want: %s, got: %s", want.Table, got.Table)
 	}
-	if want.path != got.path {
-		t.Errorf("Wrong path, want: %s, got: %s", want.path, got.path)
+	if want.Path != got.Path {
+		t.Errorf("Wrong path, want: %s, got: %s", want.Path, got.Path)
 	}
 }
 

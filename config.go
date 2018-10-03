@@ -1,4 +1,4 @@
-package main
+package lssql
 
 type Config interface {
 	ReadConfig([]byte) (*ConfigT, error)
@@ -6,9 +6,9 @@ type Config interface {
 }
 
 type ConfigT struct {
-	table  string
-	limit  int
-	offset int
-	dbtype string
-	path   string
+	Table  string
+	Limit  int
+	Offset int
+	Dbtype string
+	Path   string
 }

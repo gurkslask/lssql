@@ -1,4 +1,4 @@
-package main
+package lssql
 
 import (
 	"gopkg.in/yaml.v2"
@@ -19,11 +19,11 @@ func (c Config_yml) ReadConfig(in []byte) (*ConfigT, error) {
 	}
 
 	cc := new(ConfigT)
-	cc.table = c.Table
-	cc.limit = c.Limit
-	cc.offset = c.Offset
-	cc.dbtype = c.Dbtype
-	cc.path = c.Path
+	cc.Table = c.Table
+	cc.Limit = c.Limit
+	cc.Offset = c.Offset
+	cc.Dbtype = c.Dbtype
+	cc.Path = c.Path
 	return cc, nil
 }
 

@@ -1,17 +1,32 @@
-package main
+package lssql
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 	"io/ioutil"
 )
 
+type dblister interface {
+	ColumnInfo(*string, *sql.DB) ([]DBhead, error)
+	AvailableTables(*sql.DB) (string, error)
+	Statement() string
+}
+type DBdialect struct {
+	DBtype string
+	DB     *sql.DB
+	Lister dblister
+}
+
+type DBhead struct {
+	Colname string
+	Coltype string
+}
+
 //Gets strings from unknown columns
-func getData(rows *sql.Rows) ([][]string, error) {
-	if *debugp {
-		fmt.Println("in getData")
-	}
+func GetData(rows *sql.Rows) ([][]string, error) {
 	columns, err := rows.Columns()
 	if err != nil {
 		return nil, err
@@ -50,19 +65,16 @@ func getData(rows *sql.Rows) ([][]string, error) {
 		copy(rresult[rownumber], result)
 		rownumber += 1
 	}
-	if *debugp {
-		fmt.Println("End of getData")
-	}
 	return rresult, nil
 }
 
 //Appends data with length padding to dest
-func padString(data string, length int, dest *string) {
+func PadString(data string, length int, dest *string) {
 	*dest += fmt.Sprintf("%-[1]*s\t", length, data)
 }
 
 //Gets max column length used for displaying data
-func maxColumnLength(datain ...[][]string) []int {
+func MaxColumnLength(datain ...[][]string) []int {
 	resultLength := 0
 	for _, data := range datain {
 		if len(data[0]) > resultLength {
@@ -86,7 +98,7 @@ func maxColumnLength(datain ...[][]string) []int {
 }
 
 //Prints help monologe
-func printHelp() {
+func PrintHelp() {
 	fmt.Println(` NAME
 		lssql - List SQL contents
 	SYNOPSIS
@@ -112,17 +124,17 @@ func printHelp() {
 		-help
 		Prints help dialog (this) `)
 }
-func getDbSpecifics(dbType string) (*dsa, error) {
-	databasep := new(dsa)
+func GetDbSpecifics(dbType string) (*DBdialect, error) {
+	databasep := new(DBdialect)
 	switch dbType {
 	case "sqlite":
-		psqlite := new(sqlite)
-		databasep.lister = psqlite
-		databasep.dbtype = "sqlite3"
+		psqlite := new(Sqlite)
+		databasep.Lister = psqlite
+		databasep.DBtype = "sqlite3"
 	case "postgres":
-		ppostgres := new(postgres)
-		databasep.lister = ppostgres
-		databasep.dbtype = "postgres"
+		ppostgres := new(Postgres)
+		databasep.Lister = ppostgres
+		databasep.DBtype = "postgres"
 	default:
 		e := errors.New(fmt.Sprintf("No type with the name %s supported", dbType))
 		return databasep, e
@@ -132,19 +144,16 @@ func getDbSpecifics(dbType string) (*dsa, error) {
 }
 
 //Connect to database and return a db
-func connectDB(path *string, specifiedDb *dsa) error {
+func ConnectDB(path *string, specifiedDb *DBdialect) error {
 	var err error
-	if *debugp {
-		fmt.Println("In connect")
-	}
-	specifiedDb.db, err = sql.Open(specifiedDb.dbtype, *path)
+	specifiedDb.DB, err = sql.Open(specifiedDb.DBtype, *path)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func getConfig(config Config, path *string) (*ConfigT, error) {
+func GetConfig(config Config, path *string) (*ConfigT, error) {
 	b, err := ioutil.ReadFile(*path)
 	if err != nil {
 		return nil, err

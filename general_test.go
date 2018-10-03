@@ -1,4 +1,4 @@
-package main
+package lssql
 
 import (
 	//"strings"
@@ -12,16 +12,16 @@ func TestPadString(t *testing.T) {
 	dest2 := ""
 	dest := &dest2
 
-	padString(data, length, dest)
+	PadString(data, length, dest)
 	if *dest != "testdata\t" {
 		t.Fail()
 	}
-	padString(data, length, dest)
+	PadString(data, length, dest)
 	if *dest != "testdata\ttestdata\t" {
 		t.Fail()
 	}
 	*dest = ""
-	padString(data, 19, dest)
+	PadString(data, 19, dest)
 	want := "testdata           \t"
 	if *dest != want {
 		t.Errorf("Got :%s, want:%s,", *dest, want)
@@ -35,7 +35,7 @@ func TestMaxColumnLength(t *testing.T) {
 		{"hejdsadsa", "thisshouldbe19", "dnsajkldsjakdnsöad"},
 	}
 	want := []int{14, 19, 24}
-	result := maxColumnLength(data)
+	result := MaxColumnLength(data)
 	for i, _ := range result {
 		if want[i] != result[i] {
 			t.Errorf("Got :%d, want:%d,", result, want)

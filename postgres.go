@@ -1,26 +1,23 @@
-package main
+package lssql
 
 import (
 	"database/sql"
 	"fmt"
 )
 
-type postgres struct {
+type Postgres struct {
 	db     *sql.DB
 	dbtype string
 }
 
-func (d postgres) availableTables(db *sql.DB) (string, error) {
-	if *debugp {
-		fmt.Println("In printAvailableTables")
-	}
+func (d Postgres) AvailableTables(db *sql.DB) (string, error) {
 	var result string
 	var schemaname, tablename, tableowner, tablespace string
 	rows, err := db.Query(`SELECT * FROM pg_catalog.pg_tables`)
 	if err != nil {
 		return "", err
 	}
-	data, err := getData(rows)
+	data, err := GetData(rows)
 	if err != nil {
 		return "", err
 	}
@@ -33,7 +30,7 @@ func (d postgres) availableTables(db *sql.DB) (string, error) {
 	}
 	return result, nil
 }
-func (d postgres) columnInfo(tablename *string, db *sql.DB) ([]dbhead, error) {
+func (d Postgres) ColumnInfo(tablename *string, db *sql.DB) ([]DBhead, error) {
 	tx, err := db.Begin()
 	if err != nil {
 		return nil, err
@@ -56,28 +53,22 @@ func (d postgres) columnInfo(tablename *string, db *sql.DB) ([]dbhead, error) {
 	if err != nil {
 		return nil, err
 	}
-	if *debugp {
-		fmt.Println("in columninfo")
-	}
 
 	//var heads [][]string
-	var heads []dbhead
+	var heads []DBhead
 	for index, name := range columns {
 		fmt.Println(name, columntypes[index].ScanType())
 		//heads = append(heads, []string{name, columntypes[index].ScanType().Name()})
-		heads = append(heads, dbhead{
-			colname: name,
-			coltype: columntypes[index].ScanType().Name(),
+		heads = append(heads, DBhead{
+			Colname: name,
+			Coltype: columntypes[index].ScanType().Name(),
 		})
 		//heads = [][]string{{fmt.Sprint(name, columntypes[index].ScanType())}}
 	}
 	if err != nil {
 		return nil, err
 	}
-	if *debugp {
-		fmt.Println("Leavin columninfo")
-	}
 	return heads, nil
 }
 
-func (d postgres) statement() string { return "SELECT * FROM %s LIMIT $1 OFFSET $2 " }
+func (d Postgres) Statement() string { return "SELECT * FROM %s LIMIT $1 OFFSET $2 " }
