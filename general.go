@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io/ioutil"
 )
 
 //Gets strings from unknown columns
@@ -141,4 +142,16 @@ func connectDB(path *string, specifiedDb *dsa) error {
 		return err
 	}
 	return nil
+}
+
+func getConfig(config Config, path *string) (*ConfigT, error) {
+	b, err := ioutil.ReadFile(*path)
+	if err != nil {
+		return nil, err
+	}
+	c, err := config.ReadConfig(b)
+	if err != nil {
+		return nil, err
+	}
+	return c, nil
 }

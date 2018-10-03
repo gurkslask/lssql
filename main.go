@@ -5,16 +5,19 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
+	"strings"
+
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var debug bool = false
 var debugp *bool = &debug
 
 func main() {
+	var err error
 
 	if len(os.Args) < 2 {
 		printHelp()
@@ -31,6 +34,7 @@ func main() {
 	var debugf = flag.Bool("debug", false, "Prints extra debug info")
 	var help = flag.Bool("help", false, "Prints help dialog")
 	var dbtype = flag.String("dbtype", "sqlite", `What kind of database?\nSupported databases: sqlite and postgres`)
+	var config = flag.Bool("config", false, "Use a config file, if file doesnt exist, print default config")
 	flag.CommandLine.Parse(os.Args[2:])
 
 	if *help {
@@ -39,14 +43,6 @@ func main() {
 	}
 
 	path := &os.Args[1]
-	var err error
-	/*if *dbtype == "sqlite" {
-		_, err = os.Stat(*path)
-		if os.IsNotExist(err) {
-			fmt.Println("Supplied path does not exist")
-			os.Exit(1)
-		}
-	}*/
 
 	debugp = debugf
 	if *debugp {
@@ -54,12 +50,27 @@ func main() {
 		fmt.Println(table)
 	}
 
-	if *path == "" {
-		err = errors.New("No path specified")
-		if err != nil {
-			log.Fatal(err)
+	if *config {
+		ss := strings.Split(*path, ".")
+		fileending := ss[len(ss)-1]
+		var c *ConfigT
+		if fileending == "yml" {
+			var cy Config_yml
+			var err error
+			c, err = getConfig(cy, path)
+			if err != nil {
+				panic(err)
+			}
+
 		}
+		path = &c.path
+		offset = &c.offset
+		limit = &c.limit
+		table = &c.table
+		dbtype = &c.dbtype
+
 	}
+
 	dbSpecifics, err := getDbSpecifics(*dbtype)
 	if err != nil {
 		log.Fatal(err)
