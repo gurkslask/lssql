@@ -7,7 +7,6 @@ lssql is great to use while developing your application with SQL, and you need t
 The lssql must always have a path after the command, either to a config file or a database file/server
 
 ##Available flags
-* * *
 * -table    table to show, if omitted print available tables
 * -debug    prints debug information
 * -limit    Limits how many values should be printed from the database
@@ -18,13 +17,11 @@ The lssql must always have a path after the command, either to a config file or 
 
 
 ##Things that would be nice to have
-* * *
 * -Tail -f like behaviour, as in lssql continously queries the database and prints the changes that happen
 * -Support for more database types (MSSQL, MySQL, MariaDB etc.)
 
 
 ##Examples
-* * *
 * go run lssql/cmd/main.go PATH_TO_DB -dbtype sqlite -limit 10 
 * go run lssql/cmd/main.go postgres://USERNAME:PASSWORD@ADRESS/USER -dbtype postgres -limit 10 -table TABLENAME
 * go run lssql/cmd/main.go ~/mydb_config.yml -config 
