@@ -1,12 +1,12 @@
 ## lssql
-#Terminal sqlite browser
+Terminal sqlite browser
 
 Use lssql to see what your sql tables contains, just like ls for POSIX. If you dont know the tablename lssql will print available tables. 
 lssql is great to use while developing your application with SQL, and you need to see a quick glance at your database, just fire up lssql. If you know beforehand what database and table you will want to see, make a .yml config file as a shortcut.
 
 The lssql must always have a path after the command, either to a config file or a database file/server
 
-Available flags
+##Available flags
 * * *
 * -table    table to show, if omitted print available tables
 * -debug    prints debug information
@@ -17,13 +17,13 @@ Available flags
 
 
 
-Things that would be nice to have
+##Things that would be nice to have
 * * *
 * -Tail -f like behaviour, as in lssql continously queries the database and prints the changes that happen
 * -Support for more database types (MSSQL, MySQL, MariaDB etc.)
 
 
-Examples
+##Examples
 * * *
 * go run lssql/cmd/main.go PATH_TO_DB -dbtype sqlite -limit 10 
 * go run lssql/cmd/main.go postgres://USERNAME:PASSWORD@ADRESS/USER -dbtype postgres -limit 10 -table TABLENAME
