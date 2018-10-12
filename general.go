@@ -125,23 +125,24 @@ func PrintHelp() {
 		Prints help dialog (this)
 
 		COPYRIGHT
-	lssql - terminal SQL browser
-    Copyright (C) 2018  Alexander Svensson
+		lssql - terminal SQL browser
+		Copyright (C) 2018  Alexander Svensson
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+		This program is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License, or
+		(at your option) any later version.
 
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
+		This program is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
 
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+		You should have received a copy of the GNU General Public License
+		along with this program.  If not, see <http://www.gnu.org/licenses/>.
 `)
 }
+
 func GetDbSpecifics(dbType string) (*DBdialect, error) {
 	databasep := new(DBdialect)
 	switch dbType {
@@ -174,10 +175,16 @@ func ConnectDB(path *string, specifiedDb *DBdialect) error {
 func GetConfig(config Config, path *string) (*ConfigT, error) {
 	b, err := ioutil.ReadFile(*path)
 	if b == nil {
-		//File doesnt exist
+		//File doesnt exist then make file and then open it
 		config.MakeConfig()
-		ioutil.WriteFile(*path, config.MakeConfig(), 0777)
+		err = ioutil.WriteFile(*path, config.MakeConfig(), 0777)
+		if err != nil {
+			return nil, err
+		}
 		b, err = ioutil.ReadFile(*path)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if err != nil {
 		return nil, err

@@ -1,17 +1,13 @@
 package main
 
 import (
-	// "database/sql"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 
 	"github.com/gurkslask/lssql"
-	//_ "github.com/lib/pq"
-	//_ "github.com/mattn/go-sqlite3"
 )
 
 var debug bool = false
@@ -20,30 +16,14 @@ var debugp *bool = &debug
 func main() {
 	var err error
 
-	if len(os.Args) < 2 {
-		lssql.PrintHelp()
-		os.Exit(1)
-	}
-	if string(os.Args[1][0]) == "-" {
-		lssql.PrintHelp()
-		os.Exit(1)
-	}
-
 	var table = flag.String("table", "", "Name of the table in db")
 	var limit = flag.Int("limit", 10, "Number of lines to print")
 	var offset = flag.Int("offset", 1, "Offset from where to start printing")
 	var debugf = flag.Bool("debug", false, "Prints extra debug info")
-	var help = flag.Bool("help", false, "Prints help dialog")
 	var dbtype = flag.String("dbtype", "sqlite", `What kind of database?\nSupported databases: sqlite and postgres`)
 	var config = flag.Bool("config", false, "Use a config file, if file doesnt exist, print default config")
-	flag.CommandLine.Parse(os.Args[2:])
-
-	if *help {
-		lssql.PrintHelp()
-		os.Exit(0)
-	}
-
-	path := &os.Args[1]
+	var path = flag.String("path", "", "Path to database or config file")
+	flag.Parse()
 
 	debugp = debugf
 	if *debugp {
@@ -105,11 +85,9 @@ func printTable(d lssql.DBdialect, tablename *string, limit, offset *int) (strin
 
 	}
 	fmt.Printf("Table %s\n\n", *tablename)
-	//stmt, err := d.db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT $1 OFFSET $2 ", *tablename))
-	//stmt, err := d.db.Prepare(fmt.Sprintf("SELECT * FROM %s LIMIT ? OFFSET ? ", *tablename))
 	stmt, err := d.DB.Prepare(fmt.Sprintf(d.Lister.Statement(), *tablename))
 	if err != nil {
-		fmt.Println("stmt err")
+		fmt.Println("Statement error")
 		return "", err
 	}
 	rows, err := stmt.Query(*limit, *offset)

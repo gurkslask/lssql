@@ -49,8 +49,8 @@ func (d Sqlite) ColumnInfo(tablename *string, db *sql.DB) ([]DBhead, error) {
 	var t []DBhead
 	for i, _ := range heads {
 		t = append(t, DBhead{
-			Colname: heads[i][0],
-			Coltype: heads[i][1],
+			Colname: heads[i][1],
+			Coltype: heads[i][2],
 		})
 	}
 	_ = t
