@@ -155,6 +155,12 @@ func ConnectDB(path *string, specifiedDb *DBdialect) error {
 
 func GetConfig(config Config, path *string) (*ConfigT, error) {
 	b, err := ioutil.ReadFile(*path)
+	if b == nil {
+		//File doesnt exist
+		config.MakeConfig()
+		ioutil.WriteFile(*path, config.MakeConfig(), 0777)
+		b, err = ioutil.ReadFile(*path)
+	}
 	if err != nil {
 		return nil, err
 	}
