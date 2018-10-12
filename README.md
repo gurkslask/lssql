@@ -15,7 +15,16 @@ Available flags
 * -dbtype   Type of database as a string (postgres, sqlite)
 * -config   This is a config file
 
+
+
 Things that would be nice to have
 * * *
 * -Tail -f like behaviour, as in lssql continously queries the database and prints the changes that happen
 * -Support for more database types (MSSQL, MySQL, MariaDB etc.)
+
+
+Examples
+* * *
+* go run lssql/cmd/main.go PATH_TO_DB -dbtype sqlite -limit 10 
+* go run lssql/cmd/main.go postgres://USERNAME:PASSWORD@ADRESS/USER -dbtype postgres -limit 10 -table TABLENAME
+* go run lssql/cmd/main.go ~/mydb_config.yml -config 
